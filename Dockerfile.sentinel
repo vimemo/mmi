@@ -1,0 +1,34 @@
+#
+# ---- Base Node ----
+FROM alpine AS base
+
+# Add packages
+RUN apk add --update --no-cache \
+  build-base \
+  nodejs-current \
+  curl \
+  npm \
+  tzdata
+
+WORKDIR /app
+
+# Install
+COPY ./shared-libs ./shared-libs
+COPY ./sentinel/package.json ./sentinel/package.json
+
+
+#
+# ---- Dependencies ----
+From base AS dependencies
+# install deps
+RUN cd sentinel && npm ci --silent
+
+#
+# ---- Test ----
+from dependencies as test
+COPY sentinel ./sentinel
+COPY docker/sentinel ./docker/sentinel
+
+
+# Start up
+CMD ["docker/sentinel/startup.sh"]
